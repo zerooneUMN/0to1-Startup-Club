@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>0→1 | University of Minnesota's Premier Startup Club</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600&family=PT+Serif:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    body {
+      font-family: 'PT Serif', Georgia, serif;
+      background: #fffcf7;
+      color: #1a1a1a;
+    }
+
+    /* ── Slide animations ── */
+    @keyframes slideUpIn {
+      from { transform: translateY(60px); opacity: 0; }
+      to   { transform: translateY(0);    opacity: 1; }
+    }
+@keyframes slideLeftIn {
+      from { transform: translateX(60px); opacity: 0; }
+      to   { transform: translateX(0);    opacity: 1; }
+    }
+    @keyframes slideRightIn {
+      from { transform: translateX(-60px); opacity: 0; }
+      to   { transform: translateX(0);     opacity: 1; }
+    }
+
+    .anim-slide-up    { animation: slideUpIn    0.48s cubic-bezier(0.4,0,0.2,1) forwards; }
+    .anim-slide-left  { animation: slideLeftIn  0.48s cubic-bezier(0.4,0,0.2,1) forwards; }
+    .anim-slide-right { animation: slideRightIn 0.48s cubic-bezier(0.4,0,0.2,1) forwards; }
+
+    /* ── Panels (all hidden by default, JS controls display) ── */
+    .panel {
+      display: none;
+      width: 100%;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* ── Nav buttons ── */
+    .nav-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      color: #1a1a1a;
+      padding: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: opacity 0.15s;
+    }
+    .nav-btn.is-active  { opacity: 1; }
+    .nav-btn.is-inactive { opacity: 0.4; }
+    .nav-btn.is-inactive:hover { opacity: 0.8; }
+
+    /* ── Pill buttons ── */
+    .btn-pill {
+      border: 1px solid #1a1a1a;
+      border-radius: 9999px;
+      background: transparent;
+      color: #1a1a1a;
+      cursor: pointer;
+      font-family: 'PT Serif', Georgia, serif;
+      font-size: clamp(0.96rem, 2.64vmin, 1.56rem);
+      padding: clamp(0.6rem, 1.68vmin, 0.9rem) clamp(1.5rem, 4.8vmin, 3rem);
+      transition: background-color 0.15s, color 0.15s;
+    }
+    .btn-pill:hover {
+      background: #1a1a1a;
+      color: #fffcf7;
+    }
+
+    .btn-pill-sm {
+      border: 1px solid #1a1a1a;
+      border-radius: 9999px;
+      background: transparent;
+      color: #1a1a1a;
+      cursor: pointer;
+      font-family: 'PT Serif', Georgia, serif;
+      font-size: clamp(0.66rem, 1.92vmin, 1.2rem);
+      padding: clamp(0.36rem, 1.2vmin, 0.6rem) clamp(0.9rem, 3.6vmin, 2.4rem);
+      transition: background-color 0.15s, color 0.15s;
+    }
+    .btn-pill-sm:hover {
+      background: #1a1a1a;
+      color: #fffcf7;
+    }
+
+    /* ── Bordered card box ── */
+    .card-box {
+      border: 2px solid #1a1a1a;
+      border-radius: 1rem;
+      padding: clamp(1.2rem, 3.6vmin, 3.6rem) clamp(1.5rem, 6vmin, 6rem);
+      text-align: center;
+      width: 100%;
+      max-width: min(85%, 53rem);
+    }
+
+    /* ── Detail panels (public-meetings, accelerator, dinner-series) ── */
+    /* Tighter gap + card padding so everything stays within the fixed frame */
+    .detail-inner {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      width: 100%;
+      gap: clamp(0.5rem, 1.8vmin, 1.2rem);
+      padding: 0 clamp(1rem, 6vmin, 6rem);
+    }
+    .detail-inner .card-box {
+      padding: clamp(0.75rem, 2vmin, 2rem) clamp(1.5rem, 6vmin, 6rem);
+    }
+
+    /* ── Event card ── */
+    .event-card {
+      border: 2px solid #1a1a1a;
+      border-radius: clamp(0.6rem, 2.4vmin, 1.2rem);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: clamp(0.9rem, 3.6vmin, 3rem) clamp(0.6rem, 2.4vmin, 2.4rem);
+      min-height: clamp(10rem, 36vmin, 24rem);
+    }
+
+    /* ── Social link ── */
+    .social-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      transition: opacity 0.15s;
+    }
+    .social-link:hover { opacity: 0.7; }
+
+    /* ── Swash line ── */
+    .swash {
+      display: block;
+      margin: -0.25vmin auto 0.5vmin;
+      width: clamp(8rem, 28vmin, 22rem);
+    }
+
+    /* ── Team grid ── */
+    .team-grid {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: clamp(0.48rem, 2.4vmin, 2.4rem) clamp(0.6rem, 3.6vmin, 3.6rem);
+      max-width: min(95%, 67rem);
+      width: 100%;
+    }
+
+    /* ── Events grid ── */
+    .events-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: clamp(0.6rem, 2.4vmin, 3rem);
+      max-width: min(95%, 62rem);
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Outer viewport wrapper -->
+  <div style="min-height: 100vh; width: 100%; display: flex; align-items: center; justify-content: center; background: #fffcf7; padding: clamp(0.4rem, 1vmin, 1rem);">
+
+    <!-- macOS window frame -->
+    <div style="position: relative; display: flex; flex-direction: column; width: 100%; height: calc(100vh - clamp(0.8rem, 2vmin, 2rem)); background: #fffcf7; border: 2.5px solid #1a1a1a; border-radius: clamp(0.75rem, 2vmin, 1.375rem); box-shadow: 0 4px 32px rgba(0,0,0,0.10); overflow: hidden;">
+
+      <!-- ── Top bar ── -->
+      <div style="display: flex; align-items: center; justify-content: space-between; flex-shrink: 0; padding: clamp(0.6rem, 2vmin, 1.25rem) clamp(0.75rem, 2.5vmin, 1.5rem) clamp(0.3rem, 1.2vmin, 0.75rem);">
+
+        <!-- Traffic lights -->
+        <div style="display: flex; align-items: center; gap: clamp(0.3rem, 1vmin, 0.625rem);">
+          <div style="border-radius: 50%; background: #FF5F57; width: clamp(0.6rem, 2vmin, 1.1rem); height: clamp(0.6rem, 2vmin, 1.1rem);"></div>
+          <div style="border-radius: 50%; background: #FEBC2E; width: clamp(0.6rem, 2vmin, 1.1rem); height: clamp(0.6rem, 2vmin, 1.1rem);"></div>
+          <div style="border-radius: 50%; background: #28C840; width: clamp(0.6rem, 2vmin, 1.1rem); height: clamp(0.6rem, 2vmin, 1.1rem);"></div>
+        </div>
+
+        <!-- Nav buttons -->
+        <div style="display: flex; align-items: center; gap: clamp(0.75rem, 2.5vmin, 1.5rem);">
+          <!-- Home -->
+          <button class="nav-btn is-active" id="nav-home" onclick="goToMain('home')" aria-label="Home">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: clamp(1.1rem, 3.5vmin, 2rem); height: clamp(1.1rem, 3.5vmin, 2rem);">
+              <path d="m3 9 9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+              <polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+          </button>
+          <!-- Info -->
+          <button class="nav-btn is-inactive" id="nav-info" onclick="goToMain('info')" aria-label="About">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: clamp(1.1rem, 3.5vmin, 2rem); height: clamp(1.1rem, 3.5vmin, 2rem);">
+              <circle cx="12" cy="12" r="10"/>
+              <path d="M12 16v-4"/>
+              <path d="M12 8h.01"/>
+            </svg>
+          </button>
+          <!-- Events/Calendar -->
+          <button class="nav-btn is-inactive" id="nav-events" onclick="goToMain('events')" aria-label="Events">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="width: clamp(1.1rem, 3.5vmin, 2rem); height: clamp(1.1rem, 3.5vmin, 2rem);">
+              <path d="M8 2v4"/>
+              <path d="M16 2v4"/>
+              <rect width="18" height="18" x="3" y="4" rx="2"/>
+              <path d="M3 10h18"/>
+            </svg>
+          </button>
+        </div>
+      </div>
+
+      <!-- ── Content area ── -->
+      <div style="flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; overflow: hidden; position: relative;">
+
+        <!-- ════ HOME panel ════ -->
+        <div id="panel-home" class="panel">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: clamp(0.7rem, 2.8vmin, 1.8rem); padding: 0 clamp(1rem, 6vmin, 6rem);">
+            <div style="font-weight: 700; letter-spacing: -0.025em; user-select: none; line-height: 1; font-size: clamp(3rem, 14vmin, 11rem);">
+              0 &rarr; 1
+            </div>
+            <p style="text-align: center; line-height: 1.375; font-size: clamp(1.2rem, 4.8vmin, 3.2rem); max-width: 80%;">
+              The University of Minnesota's<br>Premier Startup Club
+            </p>
+            <div class="card-box" style="max-width: min(85%, 43rem);">
+              <p style="font-weight: 700; font-size: clamp(1.2rem, 3.6vmin, 2.16rem); margin-bottom: clamp(0.3rem, 1.2vmin, 0.9rem);">Our Thesis</p>
+              <p style="line-height: 1.7; font-size: clamp(0.78rem, 2.1vmin, 1.32rem);">
+                The University of Minnesota is packed with world-class engineering and business talent.<br>
+                Yet, too few take risks or build something that truly matters.<br>
+                Through open meetings and our intensive three week student-ran startup accelerator, we're building something bigger:<br>
+                A movement that will make the University of Minnesota one of the best entrepreneurship schools in the country.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- ════ ABOUT panel ════ -->
+        <div id="panel-about" class="panel">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: clamp(0.9rem, 4.2vmin, 2.4rem); padding: 0 clamp(1rem, 6vmin, 6rem);">
+            <div style="text-align: center;">
+              <h2 style="font-weight: 400; font-size: clamp(2.4rem, 8.4vmin, 5.4rem);">About us</h2>
+              <svg viewBox="0 0 300 40" class="swash" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 28 Q80 8 150 22 Q220 36 280 16" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+            <div class="card-box">
+              <p style="line-height: 1.625; font-size: clamp(0.9rem, 2.64vmin, 1.62rem);">
+                We're a community for entrepreneurs and visionaries building
+                real-world startups. Our members are curious, ambitious, and ready to
+                learn by doing. Whether you're exploring an idea, looking for a
+                co-founder, or already building, 0-1 is where you'll find the
+                people, resources, and momentum to take your startup from zero to one.
+              </p>
+            </div>
+            <button class="btn-pill" onclick="goToTeam()">Meet the team ---&gt;</button>
+          </div>
+        </div>
+
+        <!-- ════ TEAM panel ════ -->
+        <div id="panel-team" class="panel">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: clamp(0.6rem, 3.6vmin, 2.1rem); padding: 0 clamp(1rem, 5vmin, 5rem);">
+            <div style="text-align: center;">
+              <h2 style="font-weight: 400; font-size: clamp(2.4rem, 8.4vmin, 5.4rem);">Meet The Team</h2>
+              <svg viewBox="0 0 300 40" class="swash" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 28 Q80 8 150 22 Q220 36 280 16" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+            <div class="team-grid">
+              <!-- President: Sydney -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.18rem, 0.96vmin, 0.6rem);">
+                <div style="border-radius: clamp(0.6rem, 2.4vmin, 1.2rem); background: #e5e7eb; border: 1px solid #d1d5db; width: clamp(3.6rem, 14.4vmin, 10.2rem); height: clamp(4.5rem, 18vmin, 12.6rem); overflow: hidden;">
+                  <img src="assets/SydneyNguyen.png" alt="Sydney" style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+                </div>
+                <p style="text-align: center; line-height: 1.25; font-family: 'Oswald', sans-serif; font-size: clamp(0.6rem, 2.16vmin, 1.32rem);">President</p>
+              </div>
+              <!-- Vice President: Julia -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.18rem, 0.96vmin, 0.6rem);">
+                <div style="border-radius: clamp(0.6rem, 2.4vmin, 1.2rem); background: #e5e7eb; border: 1px solid #d1d5db; width: clamp(3.6rem, 14.4vmin, 10.2rem); height: clamp(4.5rem, 18vmin, 12.6rem); overflow: hidden;">
+                  <img src="assets/JuliaOsmolski.jpeg" alt="Julia" style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+                </div>
+                <p style="text-align: center; line-height: 1.25; font-family: 'Oswald', sans-serif; font-size: clamp(0.6rem, 2.16vmin, 1.32rem);">Vice Pres.</p>
+              </div>
+              <!-- Accel Co-director: Josh -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.18rem, 0.96vmin, 0.6rem);">
+                <div style="border-radius: clamp(0.6rem, 2.4vmin, 1.2rem); background: #e5e7eb; border: 1px solid #d1d5db; width: clamp(3.6rem, 14.4vmin, 10.2rem); height: clamp(4.5rem, 18vmin, 12.6rem); overflow: hidden;">
+                  <img src="assets/JoshuaMcMackin.jpeg" alt="Josh" style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+                </div>
+                <p style="text-align: center; line-height: 1.25; font-family: 'Oswald', sans-serif; font-size: clamp(0.6rem, 2.16vmin, 1.32rem);">Accel.<br>Co-director</p>
+              </div>
+              <!-- Accel Co-director: Archit -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.18rem, 0.96vmin, 0.6rem);">
+                <div style="border-radius: clamp(0.6rem, 2.4vmin, 1.2rem); background: #e5e7eb; border: 1px solid #d1d5db; width: clamp(3.6rem, 14.4vmin, 10.2rem); height: clamp(4.5rem, 18vmin, 12.6rem); overflow: hidden;">
+                  <img src="assets/ArchitLal.jpeg" alt="Archit" style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+                </div>
+                <p style="text-align: center; line-height: 1.25; font-family: 'Oswald', sans-serif; font-size: clamp(0.6rem, 2.16vmin, 1.32rem);">Accel.<br>Co-director</p>
+              </div>
+              <!-- Treasurer: Akos -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.18rem, 0.96vmin, 0.6rem);">
+                <div style="border-radius: clamp(0.6rem, 2.4vmin, 1.2rem); background: #e5e7eb; border: 1px solid #d1d5db; width: clamp(3.6rem, 14.4vmin, 10.2rem); height: clamp(4.5rem, 18vmin, 12.6rem); overflow: hidden;">
+                  <img src="assets/AkosKonkoly.jpeg" alt="Akos" style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+                </div>
+                <p style="text-align: center; line-height: 1.25; font-family: 'Oswald', sans-serif; font-size: clamp(0.6rem, 2.16vmin, 1.32rem);">Treasurer</p>
+              </div>
+              <!-- Events: Rohan -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.18rem, 0.96vmin, 0.6rem);">
+                <div style="border-radius: clamp(0.6rem, 2.4vmin, 1.2rem); background: #e5e7eb; border: 1px solid #d1d5db; width: clamp(3.6rem, 14.4vmin, 10.2rem); height: clamp(4.5rem, 18vmin, 12.6rem); overflow: hidden;">
+                  <img src="assets/RohanDham.jpeg" alt="Rohan" style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+                </div>
+                <p style="text-align: center; line-height: 1.25; font-family: 'Oswald', sans-serif; font-size: clamp(0.6rem, 2.16vmin, 1.32rem);">Events</p>
+              </div>
+              <!-- Community: Soham -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.18rem, 0.96vmin, 0.6rem);">
+                <div style="border-radius: clamp(0.6rem, 2.4vmin, 1.2rem); background: #e5e7eb; border: 1px solid #d1d5db; width: clamp(3.6rem, 14.4vmin, 10.2rem); height: clamp(4.5rem, 18vmin, 12.6rem); overflow: hidden;">
+                  <img src="assets/SohamGupta.jpeg" alt="Soham" style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+                </div>
+                <p style="text-align: center; line-height: 1.25; font-family: 'Oswald', sans-serif; font-size: clamp(0.6rem, 2.16vmin, 1.32rem);">Community</p>
+              </div>
+              <!-- Recruitment: Jeff -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.18rem, 0.96vmin, 0.6rem);">
+                <div style="border-radius: clamp(0.6rem, 2.4vmin, 1.2rem); background: #e5e7eb; border: 1px solid #d1d5db; width: clamp(3.6rem, 14.4vmin, 10.2rem); height: clamp(4.5rem, 18vmin, 12.6rem); overflow: hidden;">
+                  <img src="assets/JeffWei.jpeg" alt="Jeff" style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+                </div>
+                <p style="text-align: center; line-height: 1.25; font-family: 'Oswald', sans-serif; font-size: clamp(0.6rem, 2.16vmin, 1.32rem);">Recruitment</p>
+              </div>
+              <!-- Technology: Daniel -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.18rem, 0.96vmin, 0.6rem);">
+                <div style="border-radius: clamp(0.6rem, 2.4vmin, 1.2rem); background: #e5e7eb; border: 1px solid #d1d5db; width: clamp(3.6rem, 14.4vmin, 10.2rem); height: clamp(4.5rem, 18vmin, 12.6rem); overflow: hidden;">
+                  <img src="assets/DanielHo.jpeg" alt="Daniel" style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+                </div>
+                <p style="text-align: center; line-height: 1.25; font-family: 'Oswald', sans-serif; font-size: clamp(0.6rem, 2.16vmin, 1.32rem);">Technology</p>
+              </div>
+              <!-- Creativity: Tharun -->
+              <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.18rem, 0.96vmin, 0.6rem);">
+                <div style="border-radius: clamp(0.6rem, 2.4vmin, 1.2rem); background: #e5e7eb; border: 1px solid #d1d5db; width: clamp(3.6rem, 14.4vmin, 10.2rem); height: clamp(4.5rem, 18vmin, 12.6rem); overflow: hidden;">
+                  <img src="assets/TharunVeeraiah.png" alt="Tharun" style="width: 100%; height: 100%; object-fit: cover; object-position: center top;">
+                </div>
+                <p style="text-align: center; line-height: 1.25; font-family: 'Oswald', sans-serif; font-size: clamp(0.6rem, 2.16vmin, 1.32rem);">Creativity</p>
+              </div>
+            </div>
+            <button class="btn-pill" onclick="goToAbout()">&lt;--- About Us</button>
+          </div>
+        </div>
+
+        <!-- ════ EVENTS OVERVIEW panel ════ -->
+        <div id="panel-events-overview" class="panel">
+          <div style="display: flex; flex-direction: column; align-items: center; justify-content: center; width: 100%; gap: clamp(0.9rem, 4.2vmin, 2.4rem); padding: 0 clamp(1rem, 6vmin, 6rem);">
+            <div style="text-align: center;">
+              <h2 style="font-weight: 400; font-size: clamp(2.4rem, 8.4vmin, 5.4rem);">Events</h2>
+              <svg viewBox="0 0 300 40" class="swash" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 28 Q80 8 150 22 Q220 36 280 16" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+            <div class="events-grid">
+
+              <!-- Public Meetings card -->
+              <div class="event-card">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.4rem, 1.8vmin, 1.2rem);">
+                  <h3 style="font-weight: 700; text-align: center; font-size: clamp(0.84rem, 2.64vmin, 1.56rem);">Public Meetings</h3>
+                  <div style="text-align: center; color: #4b5563; font-size: clamp(0.66rem, 1.92vmin, 1.2rem); line-height: 1.5;">
+                    <p>Wednesdays, 6:00 PM</p>
+                    <p>Carlson School of Management</p>
+                    <p>Room 1-147</p>
+                  </div>
+                  <p style="text-align: center; color: #4b5563; font-size: clamp(0.66rem, 1.92vmin, 1.2rem); margin-top: clamp(0.2rem, 0.6vmin, 0.4rem);">Join our Slack:</p>
+                  <a href="https://join.slack.com/t/0-1startupclub/shared_invite/zt-3ros0ks4i-MRjI6RdpOF8MVrCgH5qllA" target="_blank" rel="noopener noreferrer" class="social-link">
+                    <img src="assets/slack-logo.png" alt="Slack" style="width: clamp(1rem, 3.6vmin, 1.8rem); height: clamp(1rem, 3.6vmin, 1.8rem); object-fit: contain;">
+                  </a>
+                </div>
+                <button class="btn-pill-sm" onclick="goToEventDetail('public-meetings')" style="margin-top: clamp(0.4rem, 1.8vmin, 1.2rem);">Learn more ---&gt;</button>
+              </div>
+
+              <!-- Accelerator card -->
+              <div class="event-card">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.4rem, 1.8vmin, 1.2rem);">
+                  <h3 style="font-weight: 700; text-align: center; font-size: clamp(0.84rem, 2.64vmin, 1.56rem);">Accelerator</h3>
+                  <p style="text-align: center; color: #4b5563; line-height: 1.625; font-size: clamp(0.66rem, 1.92vmin, 1.2rem);">Our 4 week long program to help you launch a real product</p>
+                </div>
+                <button class="btn-pill-sm" onclick="goToEventDetail('accelerator')" style="margin-top: clamp(0.4rem, 1.8vmin, 1.2rem);">Learn more ---&gt;</button>
+              </div>
+
+              <!-- Dinner Series card -->
+              <div class="event-card">
+                <div style="display: flex; flex-direction: column; align-items: center; gap: clamp(0.4rem, 1.8vmin, 1.2rem);">
+                  <h3 style="font-weight: 700; text-align: center; font-size: clamp(0.84rem, 2.64vmin, 1.56rem);">Dinner Series</h3>
+                  <p style="text-align: center; color: #4b5563; line-height: 1.625; font-size: clamp(0.66rem, 1.92vmin, 1.2rem);">Our exclusive event to connect students with local founders</p>
+                </div>
+                <button class="btn-pill-sm" onclick="goToEventDetail('dinner-series')" style="margin-top: clamp(0.4rem, 1.8vmin, 1.2rem);">Learn more ---&gt;</button>
+              </div>
+
+            </div>
+          </div>
+        </div>
+
+        <!-- ════ PUBLIC MEETINGS detail panel ════ -->
+        <div id="panel-public-meetings" class="panel">
+          <div class="detail-inner">
+            <div style="text-align: center;">
+              <h2 style="font-weight: 400; font-size: clamp(2.4rem, 8.4vmin, 5.4rem);">Public Meetings</h2>
+              <svg viewBox="0 0 300 40" class="swash" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 28 Q80 8 150 22 Q220 36 280 16" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+            <div class="card-box">
+              <p style="line-height: 1.625; font-size: clamp(0.9rem, 2.64vmin, 1.62rem);">
+                Join us for Part 2 of our <strong>Product Design Series</strong>, where we will be focusing on
+                <strong>Backend Development</strong>! Learn to use tools like Supabase, Vercel, and more.
+              </p>
+              <p style="line-height: 1.625; font-size: clamp(0.9rem, 2.64vmin, 1.62rem); margin-top: clamp(0.5rem, 1.5vmin, 1rem);">
+                <strong>Thursday, March 5th</strong><br>
+                6:00 PM – 7:00 PM<br>
+                Toaster @ Walter Library
+              </p>
+            </div>
+            <button class="btn-pill" onclick="goToEventsOverview()">&lt;--- Events</button>
+          </div>
+        </div>
+
+        <!-- ════ ACCELERATOR detail panel ════ -->
+        <div id="panel-accelerator" class="panel">
+          <div class="detail-inner">
+            <div style="text-align: center;">
+              <h2 style="font-weight: 400; font-size: clamp(2.4rem, 8.4vmin, 5.4rem);">Accelerator</h2>
+              <svg viewBox="0 0 300 40" class="swash" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 28 Q80 8 150 22 Q220 36 280 16" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+            <div class="card-box">
+              <p style="line-height: 1.625; font-size: clamp(0.9rem, 2.64vmin, 1.62rem);">
+                Our <strong>4-week intensive program</strong> is designed to take your
+                idea from concept to a real, launched product. You'll work alongside
+                a cohort of driven founders, receive mentorship from experienced
+                entrepreneurs, and present your product at Demo Day.
+              </p>
+            </div>
+            <div class="card-box">
+              <p style="font-weight: 700; font-size: clamp(0.96rem, 2.64vmin, 1.56rem); margin-bottom: clamp(0.3rem, 1.2vmin, 0.9rem);">What to Expect</p>
+              <p style="line-height: 1.625; font-size: clamp(0.9rem, 2.64vmin, 1.62rem);">
+                Weekly workshops, 1-on-1 mentorship, peer feedback sessions, and a
+                final Demo Day to showcase your product to investors and the campus
+                community.
+              </p>
+            </div>
+            <button class="btn-pill" onclick="goToEventsOverview()">&lt;--- Events</button>
+          </div>
+        </div>
+
+        <!-- ════ DINNER SERIES detail panel ════ -->
+        <div id="panel-dinner-series" class="panel">
+          <div class="detail-inner">
+            <div style="text-align: center;">
+              <h2 style="font-weight: 400; font-size: clamp(2.4rem, 8.4vmin, 5.4rem);">Dinner Series</h2>
+              <svg viewBox="0 0 300 40" class="swash" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 28 Q80 8 150 22 Q220 36 280 16" stroke="#1a1a1a" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+              </svg>
+            </div>
+            <div class="card-box">
+              <p style="line-height: 1.625; font-size: clamp(0.9rem, 2.64vmin, 1.62rem);">
+                Our <strong>exclusive dinner events</strong> connect ambitious students
+                with local founders and startup leaders in an intimate setting.
+                Share a meal, hear real stories, and build meaningful relationships
+                with people who've been where you want to go.
+              </p>
+            </div>
+            <div class="card-box">
+              <p style="font-weight: 700; font-size: clamp(0.96rem, 2.64vmin, 1.56rem); margin-bottom: clamp(0.3rem, 1.2vmin, 0.9rem);">How It Works</p>
+              <p style="line-height: 1.625; font-size: clamp(0.9rem, 2.64vmin, 1.62rem);">
+                Limited seats per dinner to keep conversations personal. Invitations
+                go out through our Slack -- join the community and stay tuned for the
+                next event.
+              </p>
+            </div>
+            <button class="btn-pill" onclick="goToEventsOverview()">&lt;--- Events</button>
+          </div>
+        </div>
+
+      </div>
+      <!-- end content area -->
+
+      <!-- ── Bottom social footer ── -->
+      <div style="flex-shrink: 0; padding-bottom: clamp(0.5rem, 2vmin, 1.5rem);">
+        <div style="display: flex; align-items: center; justify-content: center; gap: clamp(1.5rem, 5vmin, 3.5rem); padding-top: clamp(0.5rem, 2vmin, 1.25rem);">
+          <a href="https://join.slack.com/t/0-1startupclub/shared_invite/zt-3ros0ks4i-MRjI6RdpOF8MVrCgH5qllA" target="_blank" rel="noopener noreferrer" aria-label="Slack" class="social-link">
+            <img src="assets/slack-logo.png" alt="Slack" style="width: clamp(1.25rem, 4.5vmin, 2.25rem); height: clamp(1.25rem, 4.5vmin, 2.25rem); object-fit: contain;">
+          </a>
+          <a href="https://www.instagram.com/0to1umn/" target="_blank" rel="noopener noreferrer" aria-label="Instagram" class="social-link">
+            <img src="assets/instagram-logo.png" alt="Instagram" style="width: clamp(1.25rem, 4.5vmin, 2.25rem); height: clamp(1.25rem, 4.5vmin, 2.25rem); object-fit: contain;">
+          </a>
+          <img src="assets/umn-logo.png" alt="University of Minnesota" style="width: clamp(1.25rem, 4.5vmin, 2.25rem); height: clamp(1.25rem, 4.5vmin, 2.25rem); object-fit: contain;">
+        </div>
+      </div>
+
+    </div>
+    <!-- end window frame -->
+  </div>
+
+  <script>
+    // ── State ──
+    var mainPage  = 'home';
+    var infoSub   = 'about';
+    var eventsSub = 'overview';
+
+    var ALL_PANELS = [
+      'panel-home',
+      'panel-about',
+      'panel-team',
+      'panel-events-overview',
+      'panel-public-meetings',
+      'panel-accelerator',
+      'panel-dinner-series'
+    ];
+
+    var EVENTS_PANELS = {
+      'overview':        'panel-events-overview',
+      'public-meetings': 'panel-public-meetings',
+      'accelerator':     'panel-accelerator',
+      'dinner-series':   'panel-dinner-series'
+    };
+
+    // ── Core show/animate helper ──
+    function showPanel(id, animClass) {
+      // Hide every panel
+      ALL_PANELS.forEach(function(pid) {
+        var el = document.getElementById(pid);
+        if (el) el.style.display = 'none';
+      });
+
+      var panel = document.getElementById(id);
+      if (!panel) return;
+
+      // Strip any previous animation classes
+      panel.classList.remove('anim-slide-up', 'anim-slide-down', 'anim-slide-left', 'anim-slide-right');
+      panel.style.display = 'flex';
+
+      if (animClass) {
+        void panel.offsetWidth; // force reflow → restarts animation
+        panel.classList.add(animClass);
+      }
+    }
+
+    // ── Nav state ──
+    function updateNav() {
+      ['home', 'info', 'events'].forEach(function(page) {
+        var btn = document.getElementById('nav-' + page);
+        if (!btn) return;
+        btn.className = 'nav-btn ' + (mainPage === page ? 'is-active' : 'is-inactive');
+      });
+    }
+
+    function currentPanelId() {
+      if (mainPage === 'home')   return 'panel-home';
+      if (mainPage === 'info')   return infoSub === 'team' ? 'panel-team' : 'panel-about';
+      if (mainPage === 'events') return EVENTS_PANELS[eventsSub];
+    }
+
+    // ── Navigation handlers ──
+    function goToMain(page) {
+      if (page === mainPage) return;
+      mainPage = page;
+      if (page === 'info')   { infoSub = 'about'; }
+      if (page === 'events') { eventsSub = 'overview'; }
+      updateNav();
+      showPanel(currentPanelId(), 'anim-slide-up');
+    }
+
+    function goToTeam() {
+      infoSub = 'team';
+      showPanel('panel-team', 'anim-slide-left');
+    }
+
+    function goToAbout() {
+      infoSub = 'about';
+      showPanel('panel-about', 'anim-slide-right');
+    }
+
+    function goToEventDetail(page) {
+      eventsSub = page;
+      showPanel(EVENTS_PANELS[page], 'anim-slide-left');
+    }
+
+    function goToEventsOverview() {
+      eventsSub = 'overview';
+      showPanel('panel-events-overview', 'anim-slide-right');
+    }
+
+    // ── Init: show home with entrance animation ──
+    showPanel('panel-home', 'anim-slide-up');
+  </script>
+
+</body>
+</html>
